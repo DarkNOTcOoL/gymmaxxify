@@ -1,0 +1,398 @@
+/* ==========================================================================
+   GYMMAXXIFY - RETRO / DITHER / MATTE THEME
+   ========================================================================== */
+
+/* 1. Custom Font Definitions */
+@font-face {
+  font-family: 'Changing Realities';
+  src: url('../assets/fonts/Aniko-Semibold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Belgin';
+  src: url('../assets/fonts/Aniko-Semibold.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. High-Contrast Retro Variables */
+:root {
+  --bg-base: #050505;        /* Deep ink black */
+  --bg-surface: #0f0f0f;     /* Slightly elevated pure dark */
+  --text-primary: #f4f4f4;   /* Stark retro white */
+  --text-secondary: #888888; /* Mid-tone gray for contrast */
+  --accent-red: #ff0033;     /* Sharp, intense, raw crimson (= Neon Crimson) */
+  --accent-crimson: #b30024; /* Darker red for active states (existing) */
+  --border-hard: #333333;    /* Sharp retro framing */
+  --border-glass: rgba(255, 0, 51, 0.16); /* Hairline for blurred/backdrop-filter surfaces (navbar etc.) */
+
+  /* Extended crimson palette — new gradient/accent family, additive so
+     nothing that already references --accent-red / --accent-crimson breaks */
+  --crimson-deep: #7a0020;                 /* Crimson Deep swatch */
+  --magenta-hint: #ff2e9c;                 /* Gradient Core's warm endpoint */
+  --gradient-core: linear-gradient(
+    135deg,
+    var(--crimson-deep) 0%,
+    var(--accent-red) 55%,
+    var(--magenta-hint) 100%
+  );
+
+  /* Dither / grain tuning */
+  --dither-cell: 4px;                          /* checkerboard tile size */
+  --dither-fg: rgba(244, 2, 2, 0.035);     /* checker "on" pixel, kept subtle */
+  --grain-tile: 64px;                          /* grain bitmap tile size */
+  --grain-opacity: 0.5;                       /* overlay strength */
+  --grain-speed: 300ms;                        /* jitter cycle duration */
+
+  /* Scan-band tuning */
+  --scanband-opacity: 0.8;                     /* overlay strength */
+  --scanband-speed: 12s;                       /* one full drift loop */
+  --scanband-blur: 3px;                        /* softness of the bands */
+
+  /* Dot-matrix / chromatic-aberration heading tuning */
+  --dot-size: 4px;          /* spacing between dots in the halftone grid */
+  --dot-radius: 1.3px;      /* radius of each dot */
+  --chroma-offset: 3px;     /* RGB channel split distance */
+  --chroma-red: var(--accent-red);
+  --chroma-green: #ff0000;
+  --chroma-blue: #660000;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 3. Base Body: static dither matrix + animated jittering grain layer */
+body {
+  font-family: 'Belgin', sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  overflow-x: hidden; /* guards against the oversized grain layer below */
+
+  /* BASE LAYER — pure-CSS 4px checkerboard dither matrix (static, cheap, no repaint) */
+  background-image:
+    linear-gradient(45deg, var(--dither-fg) 25%, transparent 25%, transparent 75%, var(--dither-fg) 75%, var(--dither-fg)),
+    linear-gradient(45deg, var(--dither-fg) 25%, transparent 25%, transparent 75%, var(--dither-fg) 75%, var(--dither-fg));
+  background-size: var(--dither-cell) var(--dither-cell);
+  background-position: 0 0, calc(var(--dither-cell) / 2) calc(var(--dither-cell) / 2);
+}
+
+/* ANIMATED LAYER — dense matte grain bitmap, jittered via transform only.
+   A self-contained base64 PNG (not a url-encoded SVG filter) so Vite never has
+   to touch/optimize/rewrite it — it's just an inline string, guaranteed to
+   ship byte-for-byte in the built CSS. */
+body::after {
+  content: "";
+  position: fixed;
+  top: -20px;
+  left: -20px;
+  width: calc(100% + 40px);   /* oversized so jitter never reveals an edge */
+  height: calc(100% + 40px);
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAACCEkxzAAACS0lEQVR42gFAAr/9AbnmtMf0HUU5AC0OVoyQ9kHbARMkWnDHlBfZAlVY/751zxX0ANzgUbR+BhH+A8QQ+m5ZWUwoANM5tHXoFB4gAC/gG4UnxR1yAbKu6M7RzfNDAIev3pUrEXMkANgTaSSlUZsgAuBNSbG1JCXlAgj8gP8x9B5IBCkcBZG1PR1SAbL9+atKFzwPAuhQ3ebuWhL3AjTLvgbpOOWUAt15Vhi9uZUNBDkSJQfQvjzlA9/A0Xm7Di3XBDljLBHHavfVBMA//9VYCknGAuEKP9M0uakjA5zI8sT5GX60AM7N7IsoZrHzAuUcnSMVJjywAPvK0jQCTcGIBABbG6l2z/rbAAPejU870yoDAU32QWK97zcWAJAG/pEW2DQDAZO9MHH3CBA8A5H2OMcHMEzVA+8DWFOC8eqDA15EIfgPYAOLADvCWA8XvuB5AgzVBMEsBacoAPF7qxylZPlbAa9zwObm+8aZA/4QfKIHPfvZAJUmbTmnLs77AwQuzxvgrWU6ALMIBESE4sEIAf79jCQRbk7+Aynm3xS/zc/6APQjVLkfTTi9AzXZ3zn7o+jfABz7xD3wXsdyBBq1zabh3cq9AmNt74ve9dCwAPTfdstgoSUDAeBVTtBmMfaNA1NiFR6YAgUGAFqxFibJtzW+APkjg9R+D286AiZDKRuggcb7AKPvDNcnK9WiACMEb1wIjfdiAQtzCyQp/WMABGpPugwfWJQcAO6+CBv0ytyLAiUtqklR4gH3AA/AWoayC8vsAZ/9HnmXBsv2Eeb+LNVDIlUAAAAASUVORK5CYII=");
+  background-repeat: repeat;
+  background-size: var(--grain-tile) var(--grain-tile);
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  animation: grain-jitter var(--grain-speed) steps(8) infinite;
+}
+
+/* THE MOVEMENT — a jumpy, discrete jitter (steps(), not ease) so it reads as
+   flickering film grain rather than a smooth pan. Only `transform` changes,
+   so every tick is compositor-only: no layout, no repaint, no reflow. */
+@keyframes grain-jitter {
+  0%   { transform: translate3d(0px, 0px, 0); }
+  12%  { transform: translate3d(-3px, 2px, 0); }
+  24%  { transform: translate3d(2px, -4px, 0); }
+  37%  { transform: translate3d(-4px, -2px, 0); }
+  49%  { transform: translate3d(3px, 3px, 0); }
+  62%  { transform: translate3d(-2px, 4px, 0); }
+  74%  { transform: translate3d(4px, -3px, 0); }
+  86%  { transform: translate3d(-3px, -4px, 0); }
+  100% { transform: translate3d(0px, 0px, 0); }
+}
+
+/* Respect motion preferences: keep the texture, drop the flicker */
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none;
+  }
+}
+
+/* 3b. Scan-band distortion — one or two faint bright bands drifting down the
+   viewport, like tracking interference on a VHS/CRT. Lives on <html>::before
+   (not <body>) purely so it doesn't collide with the grain layer on
+   body::after above — no extra markup required.
+
+   Perf note: the gradient itself never moves or repaints. A single
+   repeating-linear-gradient with a 420px period is painted once, and the
+   whole layer is nudged with translate3d(). Animating by exactly one period
+   makes the loop seamless with zero jump-cut. */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9996;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 128px,
+    rgba(244, 244, 244, 0.07) 128px,
+    rgba(244, 244, 244, 0.07) 132px,
+    transparent 132px,
+    transparent 320px,
+    rgba(244, 244, 244, 0.05) 320px,
+    rgba(244, 244, 244, 0.05) 324px,
+    transparent 324px,
+    transparent 420px
+  );
+  filter: blur(var(--scanband-blur));
+  mix-blend-mode: screen;
+  opacity: var(--scanband-opacity);
+  will-change: transform;
+  animation: scan-drift var(--scanband-speed) linear infinite;
+}
+
+@keyframes scan-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 420px, 0); } /* exactly one gradient period */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html::before {
+    animation: none;
+  }
+}
+
+/* 4. Typography Rules */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Changing Realities', sans-serif;
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 4b. Dot-matrix / halftone heading with RGB chromatic aberration.
+   ==========================================================================
+   Usage:
+     <h1 class="dot-heading" data-text="GYMMAXXIFY">GYMMAXXIFY</h1>
+
+   `data-text` must match the element's visible text — it's what gets
+   painted into the red and blue ghost layers via `content: attr(data-text)`.
+   Duplicating it by hand is the zero-JS option. If you'd rather not repeat
+   yourself in markup, drop in the ~6-line dot-heading.js helper (provided
+   separately) which copies textContent into data-text automatically on
+   load — see the file for the one-line hook.
+
+   How it works: the heading's fill is a repeating radial-gradient "dot"
+   pattern clipped to the text shape (background-clip: text), so each glyph
+   renders as a field of small dots instead of a solid stroke. Three copies
+   of that — one green (the element itself), one red (::before), one blue
+   (::after) — are nudged a few px apart and composited with
+   mix-blend-mode: screen, which is what produces the color-fringed edges.
+   Everything here is pure CSS; no canvas or SVG filter is required. */
+.dot-heading {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image: radial-gradient(circle, var(--chroma-green) var(--dot-radius), transparent calc(var(--dot-radius) + 0.4px));
+  background-size: var(--dot-size) var(--dot-size);
+  -webkit-background-clip: text;
+  background-clip: text;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 14px rgba(255, 0, 51, 0.35));
+}
+
+.dot-heading::before,
+.dot-heading::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  background-size: var(--dot-size) var(--dot-size);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.dot-heading::before {
+  background-image: radial-gradient(circle, var(--chroma-red) var(--dot-radius), transparent calc(var(--dot-radius) + 0.4px));
+  transform: translate(calc(-1 * var(--chroma-offset)), 1px);
+  animation: chroma-drift-a 4.5s ease-in-out infinite;
+}
+
+.dot-heading::after {
+  background-image: radial-gradient(circle, var(--chroma-blue) var(--dot-radius), transparent calc(var(--dot-radius) + 0.4px));
+  transform: translate(var(--chroma-offset), -1px);
+  animation: chroma-drift-b 5.2s ease-in-out infinite;
+}
+
+/* Small, independent drift per channel so the misalignment never looks
+   perfectly synced — mirrors how a real mistracked CRT wanders. Transform
+   only, so this stays compositor-cheap. */
+@keyframes chroma-drift-a {
+  0%, 100% { transform: translate(calc(-1 * var(--chroma-offset)), 1px); }
+  50%      { transform: translate(calc(-1 * var(--chroma-offset) - 1.5px), 0); }
+}
+
+@keyframes chroma-drift-b {
+  0%, 100% { transform: translate(var(--chroma-offset), -1px); }
+  50%      { transform: translate(calc(var(--chroma-offset) + 1.5px), 0.5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-heading::before,
+  .dot-heading::after {
+    animation: none;
+  }
+}
+
+/* Flattened Gradient Utilities */
+.text-gradient {
+  color: var(--text-primary);
+}
+
+.text-gradient-red {
+  color: var(--accent-red);
+  text-shadow: 3px 3px 0px rgba(255, 0, 51, 0.25); /* Hard retro shadow */
+}
+
+/* Gradient Core utilities — the deep-crimson -> neon-crimson -> magenta-hint
+   diagonal, ready to drop on any text or surface. */
+.text-gradient-core {
+  background: var(--gradient-core);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gradient-core {
+  background: var(--gradient-core);
+}
+
+/* 5. Sharp Pixel-Perfect Shells (Replaces Glassmorphism) */
+.glass-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hard);
+  border-radius: 0px; /* Sharp corners */
+  /* Hard brutalist drop shadow */
+  box-shadow: 6px 6px 0px var(--border-hard);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel:hover {
+  border-color: var(--text-primary);
+  box-shadow: 6px 6px 0px var(--accent-crimson);
+}
+
+/* Subtle CRT scanline effect on cards for extra grit */
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+/* 6. Layout Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+  padding-top: 5rem;
+}
+
+/* 7. Reusable Sharp Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0px; /* Sharp corners */
+  font-family: 'Changing Realities', sans-serif;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--gradient-core);
+  color: var(--bg-base);
+  border-color: var(--accent-red);
+  box-shadow: 4px 4px 0px var(--text-primary);
+}
+
+.btn-primary:hover {
+  background: var(--crimson-deep);
+  border-color: var(--accent-crimson);
+}
+
+/* Click state pushes the button down to meet its shadow */
+.btn-primary:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px var(--text-primary);
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hard);
+  box-shadow: 4px 4px 0px var(--border-hard);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-primary);
+  box-shadow: 4px 4px 0px var(--accent-red);
+  color: var(--accent-red);
+}
+
+.btn-secondary:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px var(--accent-red);
+}
