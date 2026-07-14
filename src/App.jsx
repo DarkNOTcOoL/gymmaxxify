@@ -5,10 +5,12 @@ import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import Workouts from './pages/Workouts'
 import Login from './pages/Login'
+import FluidBackground from './components/FluidBackground'
 
 function App() {
   return (
     <div className="app-wrapper">
+      <FluidBackground />
       <Navbar />
       <main>
         <Routes>

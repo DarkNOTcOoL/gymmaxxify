@@ -71,7 +71,7 @@
 /* 3. Base Body: static dither matrix + animated jittering grain layer */
 body {
   font-family: 'Belgin', sans-serif;
-  background-color: var(--bg-base);
+  background-color: transparent; 
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -91,46 +91,12 @@ body {
    A self-contained base64 PNG (not a url-encoded SVG filter) so Vite never has
    to touch/optimize/rewrite it — it's just an inline string, guaranteed to
    ship byte-for-byte in the built CSS. */
-body::after {
-  content: "";
-  position: fixed;
-  top: -20px;
-  left: -20px;
-  width: calc(100% + 40px);   /* oversized so jitter never reveals an edge */
-  height: calc(100% + 40px);
-  pointer-events: none;
-  z-index: 9999;
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAACCEkxzAAACS0lEQVR42gFAAr/9AbnmtMf0HUU5AC0OVoyQ9kHbARMkWnDHlBfZAlVY/751zxX0ANzgUbR+BhH+A8QQ+m5ZWUwoANM5tHXoFB4gAC/gG4UnxR1yAbKu6M7RzfNDAIev3pUrEXMkANgTaSSlUZsgAuBNSbG1JCXlAgj8gP8x9B5IBCkcBZG1PR1SAbL9+atKFzwPAuhQ3ebuWhL3AjTLvgbpOOWUAt15Vhi9uZUNBDkSJQfQvjzlA9/A0Xm7Di3XBDljLBHHavfVBMA//9VYCknGAuEKP9M0uakjA5zI8sT5GX60AM7N7IsoZrHzAuUcnSMVJjywAPvK0jQCTcGIBABbG6l2z/rbAAPejU870yoDAU32QWK97zcWAJAG/pEW2DQDAZO9MHH3CBA8A5H2OMcHMEzVA+8DWFOC8eqDA15EIfgPYAOLADvCWA8XvuB5AgzVBMEsBacoAPF7qxylZPlbAa9zwObm+8aZA/4QfKIHPfvZAJUmbTmnLs77AwQuzxvgrWU6ALMIBESE4sEIAf79jCQRbk7+Aynm3xS/zc/6APQjVLkfTTi9AzXZ3zn7o+jfABz7xD3wXsdyBBq1zabh3cq9AmNt74ve9dCwAPTfdstgoSUDAeBVTtBmMfaNA1NiFR6YAgUGAFqxFibJtzW+APkjg9R+D286AiZDKRuggcb7AKPvDNcnK9WiACMEb1wIjfdiAQtzCyQp/WMABGpPugwfWJQcAO6+CBv0ytyLAiUtqklR4gH3AA/AWoayC8vsAZ/9HnmXBsv2Eeb+LNVDIlUAAAAASUVORK5CYII=");
-  background-repeat: repeat;
-  background-size: var(--grain-tile) var(--grain-tile);
-  opacity: var(--grain-opacity);
-  mix-blend-mode: overlay;
-  will-change: transform;
-  transform: translate3d(0, 0, 0);
-  animation: grain-jitter var(--grain-speed) steps(8) infinite;
-}
+
 
 /* THE MOVEMENT — a jumpy, discrete jitter (steps(), not ease) so it reads as
    flickering film grain rather than a smooth pan. Only `transform` changes,
    so every tick is compositor-only: no layout, no repaint, no reflow. */
-@keyframes grain-jitter {
-  0%   { transform: translate3d(0px, 0px, 0); }
-  12%  { transform: translate3d(-3px, 2px, 0); }
-  24%  { transform: translate3d(2px, -4px, 0); }
-  37%  { transform: translate3d(-4px, -2px, 0); }
-  49%  { transform: translate3d(3px, 3px, 0); }
-  62%  { transform: translate3d(-2px, 4px, 0); }
-  74%  { transform: translate3d(4px, -3px, 0); }
-  86%  { transform: translate3d(-3px, -4px, 0); }
-  100% { transform: translate3d(0px, 0px, 0); }
-}
 
-/* Respect motion preferences: keep the texture, drop the flicker */
-@media (prefers-reduced-motion: reduce) {
-  body::after {
-    animation: none;
-  }
-}
 
 /* 3b. Scan-band distortion — one or two faint bright bands drifting down the
    viewport, like tracking interference on a VHS/CRT. Lives on <html>::before
