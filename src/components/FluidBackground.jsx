@@ -18,8 +18,8 @@ import * as THREE from 'three';
 // and the two knobs (uGrainScale, EDGE_SHARPNESS) you'll likely want to tune.
 // -----------------------------------------------------------------------------
 
-const DEFAULT_COLOR_A = '#0a1128'; // deep navy / indigo
-const DEFAULT_COLOR_B = '#a8f0dc'; // bright teal / mint
+const DEFAULT_COLOR_A = '#ca0000'; // deep navy / indigo
+const DEFAULT_COLOR_B = '#4b0000'; // bright teal / mint
 
 const vertexShader = /* glsl */ `
   varying vec2 vUv;
@@ -87,7 +87,7 @@ const fragmentShader = /* glsl */ `
   float fbm(vec2 p) {
     float value = 0.0;
     float amplitude = 0.5;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 2; i++) {
       value += amplitude * snoise(p);
       p *= 2.0;
       amplitude *= 0.5;
@@ -151,9 +151,9 @@ const fragmentShader = /* glsl */ `
     // between them; higher = smaller, busier blobs. Dropped from 1.6 to
     // 0.6 so the field actually holds large flat stretches near 0 or 1
     // instead of oscillating across the whole [0,1] range everywhere.
-    const float NOISE_SCALE = 0.6;
+    const float NOISE_SCALE = 0.3;
     float field = warpedField(nuv * NOISE_SCALE, t);
-    field = clamp(field * 0.5 + 0.5, 0.0, 1.0); // raw snoise is ~[-1,1] -> remap to [0,1]
+    field = clamp(field * 0.5 + 0.45, 0.0, 1.0); // raw snoise is ~[-1,1] -> remap to [0,1]
 
     // --- STEP 1b: isolate the transition band -----------------------
     // TUNABLE: TRANSITION_WIDTH is how far from field == 0.5 the dithered
@@ -166,7 +166,7 @@ const fragmentShader = /* glsl */ `
     // dither. Smaller width = crisper edge, bigger solid regions; larger
     // width = a softer, wider grain band. This is independent of dot size
     // (that's uGrainScale below).
-    const float TRANSITION_WIDTH = 0.06;
+    const float TRANSITION_WIDTH = 0.08;
     field = smoothstep(0.5 - TRANSITION_WIDTH, 0.5 + TRANSITION_WIDTH, field);
 
     // --- STEP 2: per-pixel dither threshold -------------------------
